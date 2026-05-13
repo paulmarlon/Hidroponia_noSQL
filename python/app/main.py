@@ -1,17 +1,13 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from cassandra.cluster import Cluster
 from datetime import datetime
 import uvicorn
+from app.database import get_cassandra_session # Importación limpia
 
 app = FastAPI(title="SIG@ - HidroponiaPro V1")
 
-# Conexión a Cassandra
-try:
-    cluster = Cluster(['127.0.0.1'], port=9042)
-    session = cluster.connect('hidroponia_store')
-except Exception as e:
-    print(f"[ERROR CASSANDRA] {e}")
+# Usamos la función que configuramos con las IPs de Adhara y la otra PC
+session = get_cassandra_session()
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):

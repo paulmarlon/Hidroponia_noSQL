@@ -1,4 +1,4 @@
-#!/mnt/projects/hydroponics_pro/python/venv/bin/python3
+#!/home/paul/Projects/hidroponia_pro/python/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
