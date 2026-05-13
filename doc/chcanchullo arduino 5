@@ -1,0 +1,59 @@
+﻿===========================================================
+PROYECTO: HIDROPONIAPRO V1 - CAPA DE HARDWARE
+AUDITOR: Paul Quispe
+SISTEMA OPERATIVO: LMDE 7 (Adhara)
+ESTADO: Prototipo Validado (Amanecida Exitosa ggg)
+===========================================================
+
+1. ESQUEMA DE ARMADO (PROTOBOARD 830 PUNTOS)
+-----------------------------------------------------------
+[Componente]         [Pin Arduino]   [Detalle Técnico]
+- Sensor Temp (A0)   -> Pin A0       -> Potenciómetro 1
+- Sensor Hum  (A1)   -> Pin A1       -> Potenciómetro 2
+- Sensor pH   (A2)   -> Pin A2       -> Potenciómetro 3
+- Sensor Luz  (A3)   -> Pin A3       -> Potenciómetro 4
+
+- LED Alerta Temp    -> Pin 13       -> LED RGB (Ciclo Auto) / Res. 100 Ohm
+- LED Alerta Hum     -> Pin 12       -> LED Amarillo / Res. 220 Ohm
+- LED Alerta pH      -> Pin 11       -> LED Verde / Res. 220 Ohm
+- LED Alerta Luz     -> Pin 10       -> LED Azul / Res. 220 Ohm
+
+- Pantalla LCD       -> I2C (A4/A5)  -> Dirección 0x27 / Mensaje "ADARA ONLINE"
+
+2. RESISTENCIAS (AJUSTE DE AUDITORÍA)
+-----------------------------------------------------------
+- Marrón-Negro-Marrón: 100 Ohmios (Usada en LED Rojo/RGB para brillo fuerte).
+- Rojo-Rojo-Marrón: 220 Ohmios (Usada en LEDs estándar).
+- Medición Multímetro: 0.223 en escala de 2k.
+
+3. LÓGICA DEL FIRMWARE (EL "QUÉ HACE")
+-----------------------------------------------------------
+- Muestreo: Cada 500ms.
+- Salida Serial: Formato CSV (Coma Separated Values).
+- Trama de datos: "Temp,Humedad,pH,Luz"
+- Ejemplo de Trama: "24.50,60.00,6.50,85.00"
+
+4. COMANDOS DE CONSOLA (LINUX LMDE 7)
+-----------------------------------------------------------
+# Identificar el dispositivo
+ls /dev/ttyACM* o ls /dev/ttyUSB*
+
+# Permisos de lectura/escritura para Python
+sudo chmod 666 /dev/ttyACM0
+
+# Monitor de datos rápido
+cat /dev/ttyACM0
+
+5. ARGUMENTO TÉCNICO (PARA EL DOCENTE)
+-----------------------------------------------------------
+"El Arduino actúa como la Unidad de Adquisición de Datos (DAU).
+La lógica de control de bajo nivel (alertas visuales) es local,
+mientras que la inteligencia de negocio, el almacenamiento y
+la auditoría histórica se delegan a Python y MySQL para 
+garantizar la escalabilidad y persistencia del sistema SIG@."
+
+===========================================================
+NOTAS: El LED de temperatura es un componente RGB dinámico.
+Brillo validado y estable.
+===========================================================
+

@@ -1,0 +1,56 @@
+﻿============================================================
+       CHANCHULLO TÉCNICO: CLÚSTER HIDROPONIAPRO
+============================================================
+Fecha: 11 de Mayo de 2026
+Auditor: Paul Quispe
+Sistema Operativo: LMDE 7 (Linux Mint Debian Edition)
+Proyecto: Monitoreo de Cultivos Hidropónicos
+------------------------------------------------------------
+
+1. ARQUITECTURA DE RED (Nodos)
+---------------------------------
+* ADHARA (Laptop): 192.168.2.108 (Semilla / Seed)
+* CENTRAL (PC):     192.168.2.100 (Nodo Secundario)
+* Puertos: 7000 (Gossip), 9042 (CQL Native Transport)
+
+2. CONFIGURACIÓN DOCKER (docker-compose.yml)
+---------------------------------------------
+Para que se vean entre sí, la configuración debe incluir:
+- CASSANDRA_CLUSTER_NAME: 'HidroponiaCluster'
+- CASSANDRA_SEEDS: '192.168.2.108'
+- CASSANDRA_ENDPOINT_SNITCH: 'GossipingPropertyFileSnitch'
+
+3. BASE DE DATOS Y REPLICACIÓN
+-------------------------------
+Keyspace: hidroponia_store
+Estrategia: NetworkTopologyStrategy
+Replication Factor: {'DC1': 2}  <-- Asegura copia en AMBAS máquinas.
+
+Tabla Principal:
+CREATE TABLE sensor_data (
+    sensor_id text,
+    fecha_hora timestamp,
+    tipo_sensor text,
+    valor float,
+    PRIMARY KEY (sensor_id, fecha_hora)
+) WITH CLUSTERING ORDER BY (fecha_hora DESC);
+
+4. COMANDOS DE AUDITORÍA RÁPIDA
+-------------------------------
+* Verificar clúster: 
+  docker exec -it cassandra_nodo_2 nodetool status
+
+* Entrar a la DB (desde terminal Linux):
+  docker exec -it cassandra_nodo_2 cqlsh 192.168.2.100
+
+* Salir de Cassandra:
+  Escribir 'exit' o usar Ctrl+D.
+
+5. NOTAS DE SEGURIDAD
+----------------------
+- El Firewall de LMDE 7 debe permitir tráfico en el puerto 7000.
+- Si un nodo aparece como 'DN' (Down), verificar conexión Wi-Fi/Cable.
+
+============================================================
+             FIN DEL CHANCHULLO - SIGA LINUX
+============================================================

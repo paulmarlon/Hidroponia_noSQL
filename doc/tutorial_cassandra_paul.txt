@@ -1,0 +1,50 @@
+TUTORIAL BÁSICO DE CASSANDRA PARA HIDROPONIAPRO
+==========================================
+Usuario: Paul Quispe
+Sistema: LMDE 7 / Docker
+Proyecto: HidroponiaPro
+
+1. ACCESO AL SISTEMA
+--------------------
+Para entrar a la consola de Cassandra desde tu terminal de Linux:
+$ docker exec -it cassandra-hidro cqlsh
+
+2. COMANDOS DE ESTRUCTURA (Exploración)
+--------------------------------------
+DESCRIBE keyspaces;          -- Lista todas las "bases de datos".
+USE hidroponia;              -- Entra al keyspace del proyecto.
+DESCRIBE tables;             -- Muestra las tablas dentro del keyspace.
+DESCRIBE TABLE lecturas;     -- Muestra las columnas y tipos de datos de una tabla.
+
+3. MANIPULACIÓN DE DATOS (DML)
+------------------------------
+SELECT * FROM lecturas LIMIT 20;               -- Ver las últimas 20 lecturas.
+SELECT count(*) FROM lecturas;                 -- Contar total de registros.
+TRUNCATE lecturas;                             -- Vacía la tabla (borra los datos pero no la tabla).
+
+-- Inserción manual de prueba:
+INSERT INTO lecturas (sensor_id, fecha, valor) 
+VALUES ('manual_test', toTimestamp(now()), 500);
+
+4. DEFINICIÓN DE DATOS (DDL)
+----------------------------
+-- Crear una nueva tabla:
+CREATE TABLE sensores_config (
+    id text PRIMARY KEY,
+    nombre_comun text,
+    rango_max int
+);
+
+-- Borrar una tabla:
+DROP TABLE sensores_config;
+
+5. CONCEPTOS CLAVE PARA UN INFORMÁTICO
+--------------------------------------
+* No hay Joins: En Cassandra las tablas se diseñan según las consultas, no se unen.
+* Primary Key: Es fundamental. Determina cómo se distribuyen los datos en el cluster.
+* Consistencia: Al ser distribuida, puedes elegir qué tan rápido o qué tan seguro se escribe el dato.
+* CQL: Es el lenguaje (Cassandra Query Language), muy parecido al SQL pero con limitaciones en el WHERE.
+
+6. SALIDA
+---------
+EXIT;  -- Para volver a la terminal de paul@adhara

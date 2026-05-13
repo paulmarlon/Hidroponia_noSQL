@@ -1,0 +1,12 @@
+/home/paul/Projects/
+├── assembler/
+├── java/
+├── php/ (Aquí vive tu SIG@ con Laravel)
+└── hidroponia_pro/           <-- Carpeta raíz del proyecto
+    ├── arduino/              <-- Los .ino (Sketches)
+    │   └── monitor_sensores/
+    ├── python/               <-- FastAPI, Cassandra logic, venv
+    │   ├── scripts/
+    │   └── app/
+    ├── doc/                  <-- Tus diagramas y diccionarios de datos
+    └── docker/               <-- Tus archivos docker-compose.yml

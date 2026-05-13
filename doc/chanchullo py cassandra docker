@@ -1,0 +1,96 @@
+================================================================================
+REPORTE TÉCNICO DE INSTALACIÓN Y CONFIGURACIÓN - PROYECTO HIDROPONIAPRO
+================================================================================
+SISTEMA: Central de Monitoreo (LMDE 7 - Linux Mint Debian Edition)
+FECHA: 10 de mayo de 2026
+AUDITOR/DESARROLLADOR: Paul Quispe
+ESTADO: Infraestructura y Entorno de Desarrollo 100% Operativos
+================================================================================
+
+1. ARQUITECTURA DE DIRECTORIOS
+--------------------------------------------------------------------------------
+Se ha establecido una estructura de carpetas para garantizar el orden y la 
+seguridad de los datos:
+
+$ mkdir -p ~/Projects/hidroponia_pro/{arduino,doc,docker,python}
+
+* /arduino: Código fuente (.ino) para sensores y actuadores.
+* /doc:     Documentación técnica, diagramas y esta bitácora.
+* /docker:  Infraestructura de contenedores y archivos de configuración YAML.
+* /python:  Lógica de control, API (FastAPI) y entorno virtual.
+
+2. ENTORNO VIRTUAL PYTHON (CEREBRO DEL SISTEMA)
+--------------------------------------------------------------------------------
+Aislamiento de dependencias para evitar conflictos con el Python del sistema.
+
+$ cd ~/Projects/hidroponia_pro/python
+$ python3 -m venv venv
+$ source venv/bin/activate
+
+Instalación del "Stack" tecnológico (Herramientas de Python):
+$ pip install cassandra-driver fastapi uvicorn pyserial
+
+Detalle de funcionalidades:
+- cassandra-driver: Gestión de consultas CQL y persistencia en DB NoSQL.
+- fastapi:          Framework de alto rendimiento para la API de datos.
+- uvicorn:          Servidor ASGI para el despliegue de la API.
+- pyserial:         Comunicación por puerto serie con hardware (Arduino).
+
+3. MOTOR DE CONTENEDORES (INFRAESTRUCTURA SERVIDOR)
+--------------------------------------------------------------------------------
+Instalación del motor Docker y el orquestador Compose en LMDE 7.
+
+$ sudo apt update
+$ sudo apt install docker.io docker-compose -y
+
+Habilitar el servicio para inicio automático:
+$ sudo systemctl start docker
+$ sudo systemctl enable docker
+
+Gestión de permisos (Para operar sin 'sudo' tras reiniciar sesión):
+$ sudo usermod -aG docker $USER
+
+4. DESPLIEGUE DE BASE DE DATOS (APACHE CASSANDRA)
+--------------------------------------------------------------------------------
+Ubicación: ~/Projects/hidroponia_pro/docker/docker-compose.yml
+
+Contenido del archivo de configuración (YAML):
+--------------------------------------------------------------------------------
+version: '3.8'
+services:
+  cassandra-db:
+    image: cassandra:latest
+    container_name: cassandra_central
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./data:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=HidroponiaCluster
+      - CASSANDRA_DC=DC1
+      - CASSANDRA_RACK=Rack1
+    restart: always
+--------------------------------------------------------------------------------
+
+Comando de encendido:
+$ sudo docker-compose up -d
+
+5. PROTOCOLO DE AUDITORÍA (VERIFICACIÓN FINAL)
+--------------------------------------------------------------------------------
+Para validar que la réplica sea exitosa, ejecutar estos tres comandos:
+
+1. Validar Librerías: 
+   $ pip list | grep -E "cassandra-driver|fastapi|uvicorn|pyserial"
+
+2. Validar Base de Datos:
+   $ sudo docker ps (Debe mostrar 'cassandra_central' en estado 'Up')
+
+3. Validar Intérprete:
+   $ which python (Debe apuntar a '.../python/venv/bin/python')
+
+================================================================================
+NOTAS PARA REPLICACIÓN EN LAPTOP:
+- Respetar rigurosamente la indentación (espacios) en el archivo .yml.
+- El primer inicio de Cassandra puede tardar hasta 60 segundos en estar listo 
+  para recibir conexiones debido a su inicialización interna de nodos.
+================================================================================

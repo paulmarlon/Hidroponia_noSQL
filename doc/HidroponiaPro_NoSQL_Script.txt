@@ -1,0 +1,105 @@
+-- SCRIPT DE CREACIÓN PARA PROYECTO HIDROPONIAPRO (CASSANDRA NoSQL)
+-- Adaptación del modelo relacional a reglas NoSQL (Desnormalización y Series de Tiempo)
+
+-- 1. CREACIÓN DEL ESPACIO DE DATOS (KEYSPACE)
+CREATE KEYSPACE IF NOT EXISTS hidroponia_pro 
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+USE hidroponia_pro;
+
+-- 2. GESTIÓN DE USUARIOS
+-- Diseño: Tabla simple para autenticación y perfil.
+CREATE TABLE IF NOT EXISTS usuarios (
+    id uuid PRIMARY KEY,
+    name text,
+    email text,
+    password text,
+    rol text,
+    created_at timestamp
+);
+
+-- 3. CONFIGURACIÓN DE CULTIVOS (Fusión de 'especies' y 'parametros_etapas')
+-- Diseño: Se aplica desnormalización para evitar JOINs. 
+-- 'nombre_comun' y 'descripcion' son static porque no cambian por etapa.
+CREATE TABLE IF NOT EXISTS especies_config (
+    especie_id uuid,
+    etapa text, -- ej: germinacion, crecimiento, cosecha
+    nombre_comun text static,
+    descripcion text static,
+    ph_min float,
+    ph_max float,
+    temp_min float,
+    temp_max float,
+    humedad_ideal float,
+    duracion_dias int,
+    PRIMARY KEY (especie_id, etapa)
+);
+
+-- 4. INVENTARIO Y HARDWARE (Fusión de 'dispositivos' y 'categorias')
+-- Diseño: La categoría se incluye directamente como atributo.
+CREATE TABLE IF NOT EXISTS inventario_dispositivos (
+    dispositivo_id uuid PRIMARY KEY,
+    nombre text,
+    tipo text, -- sensor o actuador
+    categoria text,
+    pin_asociado int,
+    estado_actual text -- activo, inactivo, mantenimiento
+);
+
+-- 5. HISTORIAL DE ASIGNACIONES (Sustituye 'asignaciones_hardware')
+-- Diseño: Registro histórico ordenado por fecha descendente.
+CREATE TABLE IF NOT EXISTS asignaciones_historial (
+    cultivo_id uuid,
+    fecha_asignacion timestamp,
+    dispositivo_id uuid,
+    responsable_id uuid,
+    activo boolean,
+    PRIMARY KEY (cultivo_id, fecha_asignacion)
+) WITH CLUSTERING ORDER BY (fecha_asignacion DESC);
+
+-- 6. LECTURAS DE SENSORES (EL MOTOR DE DATOS)
+-- Diseño: Particionado por cultivo y tipo para optimizar gráficas en tiempo real.
+-- Permite consultar "Todas las lecturas de PH del cultivo X ordenadas por tiempo".
+CREATE TABLE IF NOT EXISTS lecturas_monitoreo (
+    cultivo_id uuid,
+    tipo_sensor text, -- PH, temperatura, humedad, luz
+    timestamp timestamp,
+    dispositivo_id uuid,
+    valor_numerico float,
+    unidad text,
+    PRIMARY KEY ((cultivo_id), tipo_sensor, timestamp)
+) WITH CLUSTERING ORDER BY (tipo_sensor ASC, timestamp DESC);
+
+-- 7. LOGS DE ACTUADORES
+-- Diseño: Registro inmutable de acciones (encendido/apagado de bombas/luces).
+CREATE TABLE IF NOT EXISTS log_actuadores (
+    cultivo_id uuid,
+    timestamp timestamp,
+    dispositivo_id uuid,
+    accion text, -- encendido, apagado, ajuste
+    valor_ajuste float,
+    motivo text,
+    PRIMARY KEY (cultivo_id, timestamp)
+) WITH CLUSTERING ORDER BY (timestamp DESC);
+
+-- 8. ALERTAS DEL SISTEMA
+-- Diseño: Bandeja de entrada de alertas por cultivo.
+CREATE TABLE IF NOT EXISTS alertas_sistema (
+    cultivo_id uuid,
+    timestamp timestamp,
+    nivel text, -- INFO, WARNING, CRITICAL
+    mensaje text,
+    leido boolean,
+    user_id_atencion uuid,
+    PRIMARY KEY (cultivo_id, timestamp)
+) WITH CLUSTERING ORDER BY (timestamp DESC);
+
+-- 9. MAESTRO DE CULTIVOS (Lote activos)
+CREATE TABLE IF NOT EXISTS cultivos_activos (
+    id uuid PRIMARY KEY,
+    especie_id uuid,
+    nombre_lote text,
+    fecha_inicio timestamp,
+    estado text, -- activo, finalizado
+    ubicacion_fisica text
+);

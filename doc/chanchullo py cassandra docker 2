@@ -1,0 +1,91 @@
+================================================================================
+REPORTE TÉCNICO DE INSTALACIÓN Y CONFIGURACIÓN - PROYECTO HIDROPONIAPRO
+================================================================================
+FASE 2: Persistencia NoSQL y Comunicación Hardware (Serial-USB)
+SISTEMA: Central de Monitoreo (LMDE 7 - Linux Mint Debian Edition)
+FECHA: 10 de mayo de 2026
+AUDITOR/DESARROLLADOR: Paul Quispe
+ESTADO: Conexión Local y Escritura en Base de Datos 100% Validada
+================================================================================
+
+1. CONFIGURACIÓN DE LA ESTRUCTURA LÓGICA (CASSANDRA CQL)
+--------------------------------------------------------------------------------
+Para garantizar la integridad y el orden cronológico de los datos de los sensores,
+se ha implementado el siguiente esquema en el motor Cassandra:
+
+Acceso a Consola de Base de Datos:
+$ sudo docker exec -it cassandra_central cqlsh
+
+Sentencias Ejecutadas:
+--------------------------------------------------------------------------------
+CREATE KEYSPACE IF NOT EXISTS hidroponia_store 
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+USE hidroponia_store;
+
+CREATE TABLE IF NOT EXISTS sensor_data (
+    sensor_id text,
+    fecha_hora timestamp,
+    tipo_sensor text,
+    valor float,
+    PRIMARY KEY (sensor_id, fecha_hora)
+) WITH CLUSTERING ORDER BY (fecha_hora DESC);
+--------------------------------------------------------------------------------
+
+2. PROTOCOLOS DE PRUEBA Y VALIDACIÓN (PYTHON)
+--------------------------------------------------------------------------------
+Se han desarrollado y ejecutado exitosamente los siguientes scripts de prueba
+dentro del entorno virtual (venv):
+
+A. Test de Conexión (test_db.py):
+   Valida que el driver 'cassandra-driver' alcance el contenedor Docker.
+   Resultado: EXITOSO (Conectado a HidroponiaCluster).
+
+B. Test de Inserción (insert_test.py):
+   Valida la capacidad de escritura. Inserta un registro manual.
+   Comando: $ python3 insert_test.py
+   Verificación: SELECT * FROM sensor_data; (Desde cqlsh).
+
+3. INTEGRACIÓN HARDWARE: EL PUENTE SERIAL (USB)
+--------------------------------------------------------------------------------
+Dado que la Laptop Windows actuará como cliente y la Laptop LMDE 7 como servidor,
+la captura física se realiza mediante el cable USB del Arduino.
+
+Identificación del Puerto en Linux:
+$ ls /dev/ttyACM*  (Resultado típico: /dev/ttyACM0)
+
+Configuración del Script 'bridge_serial.py':
+- Puerto: /dev/ttyACM0
+- Velocidad (Baudios): 9600
+- Librería: pyserial (pip install pyserial)
+
+Lógica de Proceso:
+1. Recibe String CSV del Arduino: "SENSOR_ID,TIPO,VALOR"
+2. Decodifica UTF-8 y limpia espacios.
+3. Asigna Timestamp del sistema automáticamente.
+4. Persiste en la tabla 'sensor_data' de Cassandra.
+
+4. LOGÍSTICA PARA DEMOSTRACIÓN (REPLICACIÓN DE DATOS)
+--------------------------------------------------------------------------------
+Para que la laptop externa (Windows) visualice los datos del servidor (Linux):
+
+1. Conexión de Red: Ambas laptops deben estar en la misma red o conectadas
+   directamente por cable Ethernet.
+2. Identificación de Red: $ hostname -I (Usar esta IP en la laptop Windows).
+3. Servicio Web: Se levantará FastAPI en el puerto 8000.
+4. Visualización Remota: Navegador Windows -> http://[IP_LINUX]:8000/monitoreo
+
+5. ALERTAS Y SOLUCIÓN DE PROBLEMAS (TROUBLESHOOTING)
+--------------------------------------------------------------------------------
+- IndentationError: Python requiere exactamente 4 espacios para los bloques
+  dentro de 'try', 'while' y 'if'. No mezclar tabulaciones y espacios.
+- Permisos de Puerto: Si el script serial falla por "Permission Denied",
+  ejecutar: $ sudo usermod -aG dialout $USER
+- Estado de Cassandra: Cassandra tarda ~60 segundos en iniciar. Si el script
+  da error de conexión, esperar y reintentar.
+- Ruta de Ejecución: Asegurarse de estar SIEMPRE en:
+  ~/Projects/hidroponia_pro/python (Con venv activo).
+
+================================================================================
+FIN DEL REPORTE - PROYECTO HIDROPONIAPRO V1.0
+================================================================================

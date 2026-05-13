@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  cassandra-db:
+    image: cassandra:latest
+    container_name: cassandra_central
+    restart: always
+    network_mode: "host"
+    volumes:
+      - ./data:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=HidroponiaCluster
+      - CASSANDRA_DC=DC1
+      - CASSANDRA_RACK=Rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=192.168.2.108
+      - CASSANDRA_BROADCAST_ADDRESS=192.168.2.108
+      - CASSANDRA_LISTEN_ADDRESS=192.168.2.108
+      - JVM_OPTS=-Dcassandra.ignore_dc=true -Dcassandra.ignore_rack=true
